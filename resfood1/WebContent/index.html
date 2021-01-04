@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>小萌神订餐网</title>
+	<meta charset="utf-8">
+	<link rel="shortcut icon" href="image/eat0.ico">
+	<link rel="stylesheet" href="css/reset.css">
+	<link rel="stylesheet" type="text/css" href="css/index.css">
+</head>
+<body>
+	<div class="head">
+		小萌神订餐网
+		<div class="right">
+			<span id="showlogin"><a>登录</a></span>
+			<span id="exitspan" style="display:none;"></span>
+		</div>
+	</div>
+	<div class="mubu" id="mubu"></div>
+	<div class="login" id="login">
+		<span id="unshow">X</span>
+		<form name="myform">
+			<input type="hidden" name="op" value="login">
+			<table>
+				<tr id="pp">
+					<td class="labname"><label for="username">用户名:</label></td>
+					<td colspan="2"><input name="username" type="text" placeholder="请输入用户名" id="username" /></td>
+				</tr>
+				<tr id="pp2">
+					<td class="labname"><label for="pwd">密码:</label></td>
+					<td colspan="2"><input type="password" id="pwd" placeholder="请输入密码" name="pwd" /></td>
+				</tr>
+			</table>
+		</form>
+		<input type="button" value="login" class="btn" id="btn">
+	</div>
+
+	<div class="login" id="myinfo">
+		<span id="unshowinfo">X</span>
+		<form name="forminfo">
+			<input type="hidden" name="op" value="confirmOrder">
+			<table>
+				<tr>
+					<td class="labname"><label for="address">送货地址:</label></td>
+					<td><input name="address" type="text" placeholder="请输入送货地址" id="address" /></td>
+				</tr>
+				<tr>
+					<td class="labname"><label for="tel">联系电话:</label></td>
+					<td><input type="text" id="tel" placeholder="请输入联系电话" name="tel" /></td>
+				</tr>
+				<tr>
+					<td class="labname"><label for="deliverytime">送货时间:</label></td>
+					<td><input type="text" name="deliverytime" id="deliverytime" placeholder="请输入送货时间" /></td>	
+				</tr>
+				<tr>
+					<td class="labname"><label for="ps">附言:</label></td>
+					<td><input type="text" id="ps" placeholder="请输入附言" name="ps" /></td>
+				</tr>
+			</table>
+			
+		</form>
+		<input type="button" value="submit" class="btn" id="submit">
+	</div>
+
+
+	<div id="content" class="content">
+		<ul id="allfoods" class="allfoods">
+		</ul>
+
+	</div>
+
+	
+	<span id="showlook" class="showlook"></span>
+
+	<div class="look" id="look">
+		<span>浏览记录</span>
+		<ul id="ull" class="ull">
+			
+		</ul>
+	</div>
+
+	<div id="gou" class="gou">
+		<div class="carbag" id="carbag">
+			<p>购物车<span id="delall">[清空]</span></p>
+			<table id="bagcontainer" cellspacing="0" cellpadding="0">
+			</table>
+		</div>
+		<span id="foodcount" class="nofood">购物车是空的 </span>
+		<div class="car" id="car"><p>￥<span>0</span></p></div>
+	</div>
+	
+
+	<div id="footer" class="footer">
+		Copyright &copy; 2016 Xiaomengsheng Incorporated Company. All rights reserved.<br />
+		订餐，就上小萌神订餐网! 
+	</div> 
+	<script src="js/jquery-2.0.3.js"></script>
+	<script type="text/javascript">
+	var uid=0;
+	
+		$("#showlogin").on("click",function(){
+			$("#login").css("display","block");
+		});
+		
+		$("#unshow").on("click",function(){
+			$("#login").css("display","none");
+		});
+		
+		//获取到所有的商品
+		$.post("resfood.do",{
+			op:"getAllFood"
+		},function(data){
+			var fjson=eval("("+data+")");
+			//数组，循环
+			var str='';
+			for(var i=0;i<fjson.length;i++){
+				str+='<li><h3 id="'+fjson[i].fid+'">'+fjson[i].fname+'</h3><div class="fooddesc" style="display:none">'
+				str+='<img src="image/'+fjson[i].fphoto+'" class="foodimg" /><article class="foodprice">'
+				str+='<p>菜品描述：'+fjson[i].detail+'</p><p class="normalprice">原价：￥'+fjson[i].normprice+'</p>'
+				str+='<p class="realprice">特价：￥<span>'+fjson[i].realprice+'</span></p>'		
+				str+='<p class="buybtn">加入购物车</p></article></div></li>'			
+			}
+			//最后写入到网页中
+			$("#allfoods").html(str);
+			//首先。菜品点击事件，显示详细内容
+			$("#allfoods li h3").on("click",function(){
+				if($(this).parent().find(".fooddesc").css("display")=="block"){
+					//如果是打开的就隐藏
+					$(this).parent().find(".fooddesc").css("display","none");
+				}else{
+					$(".fooddesc").css("display","block");
+					$(this).parent().find(".fooddesc").css("display","block");
+				}
+			});
+			
+			//点击购物车
+			$(".buybtn").on("click",function(){
+				var fid=$(this).parents("li").find("h3").attr("id");
+				var fname=$(this).parents("li").find("h3").html();
+				var price=$(this).parents("li").find(".realprice span").html();
+				
+				var x='';
+				x+= '<tr id="f'+fid+'"><td class="bagfname" style="width: 180px;">'+fname+'</td>';
+				x+= '<td class="editfoodnum">';
+				x+= '<button onclick="changeNum('+fid+',-1,'+price+')">-</button>';
+				x+= '<span>1</span><button onclick="changeNum('+fid+',1,'+price+')">+</button></td>';
+				x+= '<td class="bagprice" style="width: 80px;">￥'+price+'</td></tr>';
+				
+				//添加到网页中
+				$("#bagcontainer").html($("#bagcontainer").html()+x);
+				
+				//计算总价 
+				$("#car span").html( parseInt($("#car span").html())+parseInt(price) );
+				
+				//改变文本内容
+				$("#foodcount").html("立即下单");
+			});
+		});
+		
+		//显示出提交订单
+		$("#foodcount").on("click",function(){
+			if($("#foodcount").html()=="立即下单"){
+				$("#myinfo").css("display","block");
+			}
+		});
+		$("#unshowinfo").on("click",function(){
+			$("#myinfo").css("display","none");
+		});
+		$("#submit").on("click",function(){
+			if(uid == 0){
+				alert("请先登录！");
+				return;
+			}
+			//发送ajax请求
+			$.post("resorder.do",{
+				op:'order',
+				address:$("#address").val(),
+				tel:$("#tel").val(),
+				deliverytime:$("#deliverytime").val(),
+				ps:$("#ps").val(),
+				uid:uid
+			},function(data){
+				if(data>0){
+					alert("下单成功！")
+					location.reload(); //网页强制刷新
+				}else{
+					alert("下单失败,请联系管理员..");
+				}
+			})
+		});
+		
+		
+		//数量按钮操作改变
+		function changeNum(fid,num,price){
+			var count=parseInt($("#f"+fid+" .editfoodnum span").html() );
+			count+=num;
+			//数量不能小于0
+			if(count<0){
+				count=0;
+				$("#f"+fid+" .editfoodnum span").html(count);
+				return;
+			}
+			$("#f" +fid+ " .editfoodnum span").html(count);
+			//总价也要改变
+			$("#car span").html( parseInt($("#car span").html())+parseInt(price*num) );
+		}
+		
+		//购物车点击事件
+		$("#car").on("click",function(){
+			if( $("#carbag").css("bottom")=="-300px"){
+				$("#carbag").css("bottom","0px");
+			}else{
+				$("#carbag").css("bottom","-300px");
+			}
+			
+		});
+		
+		//登陆的点击事件
+		$("#btn").on("click",function(){
+			let uname=$("#username").val();
+			let pwd=$("#pwd").val();
+			
+			if(uname=="" || pwd==""){
+				alert("用户名或密码错误");
+				return;
+			}
+			
+			//开始发送请求
+			$.post("resuser.do",{
+				op:"login",
+				uname:uname,
+				pwd:pwd
+			},function(data){
+				var json=eval("("+data+")")
+				if(json[0].userid>0){
+					uid=json[0].userid;
+					
+					$("#login").css("display","none");
+					//清空输入的值
+					$("#username").val("");
+					$("#pwd").val("");
+					//登录按钮隐藏
+					$("#showlogin").css("display","none");
+					$("#exitspan").css("display","block");
+					//显示当前用户
+					$("#exitspan").html("尊敬的用户："+uname+",您好！<a id='exitbtn'>退出</a>");
+				}else{
+					alert("用户名或密码错误");
+				}
+			});
+		});
+	</script>
+</body>
+</html>
